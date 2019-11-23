@@ -38,6 +38,8 @@ var jsonata = (function() {
     // Start of Evaluator code
 
     var staticFrame = createFrame(null);
+    
+    var lineage = [], level = 0;
 
     /**
      * Evaluate expression against input data
@@ -173,6 +175,8 @@ var jsonata = (function() {
         var resultSequence;
         var isTupleStream = false;
         var tupleBindings = undefined;
+        
+        level++;
 
         // evaluate each step in turn
         for(var ii = 0; ii < expr.steps.length; ii++) {
@@ -201,7 +205,12 @@ var jsonata = (function() {
                 inputSequence = resultSequence;
             }
 
+            if( level === 1 ) {
+              lineage.push(resultSequence);
+            }
+
         }
+        level--;
 
         if(isTupleStream) {
             resultSequence = createSequence();
@@ -1227,7 +1236,30 @@ var jsonata = (function() {
 
         return result;
     }
-
+    /**
+     * Shallow clone an object, apart from an array of descendants that are cloned.
+     * @param {Object} obj - Object to be cloned
+     * @param {Object} lineage - Array (level) of arrays (children)
+     * @returns {*} Evaluated input data
+     */
+    function cloneLineage(obj, lineage) {
+      var res = obj.constructor === Array ? [] : {};
+      var children = lineage[0];
+      for(var key in obj) {
+        var val = obj[key];
+        res[key] =
+          typeof val !== "object" || val === null || children === undefined
+          ? val
+          : val.constructor === Array
+            ? val.find(item => children.find(child => child === item))
+              ? cloneLineage(val, lineage)
+              : val
+            : children.find(child => child === val)
+              ? cloneLineage(val, lineage.slice(1))
+              : val;
+      }
+      return res;
+    }
     /**
      * create a transformer function
      * @param {Object} expr - AST for operator
@@ -1253,7 +1285,11 @@ var jsonata = (function() {
                     position: expr.position
                 };
             }
-            var result = yield * apply(cloneFunction, [obj], null, environment);
+            //var result = yield * apply(cloneFunction, [obj], null, environment);
+            lineage = [];
+            level = 0;
+            yield * evaluate(expr.pattern, input, environment);
+            var result = cloneLineage(input, lineage);
             var matches = yield * evaluate(expr.pattern, result, environment);
             if(typeof matches !== 'undefined') {
                 if(!Array.isArray(matches)) {

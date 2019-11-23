@@ -262,31 +262,62 @@ describe("Tests that use the $clone() function", () => {
         });
     });
 
-    describe("transform expression with overridden $clone function", function() {
-        it("should return result object", function() {
-            var expr = jsonata('Account ~> |Order|{"Product":"blah"},nomatch|');
-            var count = 0;
-            expr.registerFunction("clone", function(arg) {
-                count++;
-                return JSON.parse(JSON.stringify(arg));
-            });
-            var result = expr.evaluate(testdata2);
-            var expected = {
-                "Account Name": "Firefly",
-                Order: [
-                    {
-                        OrderID: "order103",
-                        Product: "blah"
-                    },
-                    {
-                        OrderID: "order104",
-                        Product: "blah"
-                    }
-                ]
-            };
-            expect(result).to.deep.equal(expected);
-            expect(count).to.equal(1);
-        });
+    describe("transform expression should only clone transformed objects lineage", function() {
+      it("should return result object", function() {
+        //var expr = jsonata('$ ~> |Account.Order[OrderID="order103"]|{"Product":"blah"}|');
+        var expr = jsonata('$ ~> |Account.Order[OrderID="order103"]|{"Product":"blah"}|');
+        
+        var result = expr.evaluate(testdata2);
+        var expected = {
+          "Account": {
+            "Account Name": "Firefly",
+            Order: [
+                {
+                    OrderID: "order103",
+                    Product: "blah"
+                },
+                {
+                    OrderID: "order104",
+                    Product: [
+                        {
+                            "Product Name": "Bowler Hat",
+                            ProductID: 858383,
+                            SKU: "040657863",
+                            Description: {
+                                Colour: "Purple",
+                                Width: 300,
+                                Height: 200,
+                                Depth: 210,
+                                Weight: 0.75
+                            },
+                            Price: 34.45,
+                            Quantity: 4
+                        },
+                        {
+                            ProductID: 345664,
+                            SKU: "0406654603",
+                            "Product Name": "Cloak",
+                            Description: {
+                                Colour: "Black",
+                                Width: 30,
+                                Height: 20,
+                                Depth: 210,
+                                Weight: 2.0
+                            },
+                            Price: 107.99,
+                            Quantity: 1
+                        }
+                    ]
+                }
+            ]
+          }
+        };
+  
+        expect(result).to.deep.equal(expected);
+        // Lineage objects identity must have changed.
+        expect(result.Account.Order[0]).to.not.equal(testdata2.Account.Order[0]);
+        expect(result.Account.Order[1]).to.equal(testdata2.Account.Order[1]);
+    });
     });
 
     describe('transform expression with overridden $clone value', function () {

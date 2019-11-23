@@ -1,3 +1,19 @@
+# JSONata with COW cloning for the Transform operator
+
+This package is forked from https://github.com/jsonata-js/jsonata. 
+
+In the original JSONata package, the [Transform operator (... ~> | ... | ... |)](https://docs.jsonata.org/other-operators#transform-) deep clones the input object, which can be very costly in memory, in GC resources and in deep equality checking afterwards (e.g. for React components with a Redux store `transform`ed with JSONata in reducers). 
+
+In this package, the Transform operator does copy-on-write cloning, which means it only clones the "lineage" of the transformed values  (i.e. the parents of the transformed values, up to the root input object). It does not mutate any object in the process.
+
+Caveat: it does NOT work when the location pattern includes a descendant (**) operator.
+
+## Installation
+
+- `npm install @vibl/jsonata`
+
+Below is the original README of the JSONata package:
+
 # JSONata
 
 JSON query and transformation language
@@ -13,9 +29,6 @@ Reference implementation of the [JSONata query and transformation language](http
 * [JSONata language documentation](http://docs.jsonata.org/)
 * [Try it out!](http://try.jsonata.org/)
 
-## Installation
-
-- `npm install jsonata`
 
 ## Quick start
 
