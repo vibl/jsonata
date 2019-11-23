@@ -6,7 +6,9 @@ In the original JSONata package, the [Transform operator (... ~> | ... | ... |)]
 
 In this package, the Transform operator does copy-on-write cloning, which means it only clones the "lineage" of the transformed values  (i.e. the parents of the transformed values, up to the root input object). It does not mutate any object in the process.
 
-Caveat: it does NOT work when the location pattern includes a descendant (**) operator.
+Caveats: 
+- It does NOT work when the location pattern includes a descendant (**) operator.
+- The `head` part (before the `~>`) should only be `$`, i.e. the root element. So, the whole expression should always start with `jsonata("$ ~> |...`.
 
 ## Installation
 
