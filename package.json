@@ -1,6 +1,6 @@
 {
   "name": "@vibl/jsonata",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "JSON query and transformation language",
   "module": "jsonata.js",
   "main": "jsonata.js",
